@@ -87,9 +87,11 @@ padding:35px 0 70px;
 
 .grid{
 display:grid;
-grid-template-columns:1fr 420px;
+grid-template-columns:1fr;
 gap:28px;
 align-items:start;
+max-width:720px;
+margin:0 auto;
 }
 
 .card{
@@ -232,12 +234,6 @@ opacity:.7;
 cursor:not-allowed;
 }
 
-.btn-danger{
-margin-top:14px;
-background:#dc2626;
-color:white;
-}
-
 .summary{
 display:flex;
 flex-direction:column;
@@ -284,79 +280,12 @@ color:#fca5a5;
 display:block;
 }
 
-.admin-box{
-margin-top:24px;
-padding-top:24px;
-border-top:1px solid rgba(255,255,255,.08);
-}
-
-.admin-list{
-margin-top:18px;
-display:flex;
-flex-direction:column;
-gap:12px;
-max-height:400px;
-overflow:auto;
-}
-
-.admin-item{
-padding:20px;
-border-radius:22px;
-background:#0f1117;
-border:1px solid rgba(255,255,255,.05);
-display:flex;
-flex-direction:column;
-gap:10px;
-}
-
-.admin-name{
-font-size:26px;
-font-weight:800;
-line-height:1;
-}
-
-.admin-service{
-font-size:18px;
-color:#d4d4d8;
-}
-
-.admin-date{
-font-size:15px;
-color:#9ca3af;
-line-height:1.5;
-}
-
-.admin-phone{
-font-size:17px;
-font-weight:600;
-}
-
-.admin-buttons{
-display:flex;
-flex-direction:column;
-gap:12px;
-margin-top:10px;
-}
-
-.btn-whatsapp{
-background:#22c55e;
-color:white;
-}
-
 footer{
 padding:50px 20px;
 text-align:center;
 color:#9ca3af;
 border-top:1px solid rgba(255,255,255,.05);
 margin-top:50px;
-}
-
-@media(max-width:980px){
-
-.grid{
-grid-template-columns:1fr;
-}
-
 }
 
 </style>
@@ -390,7 +319,7 @@ Escolha seu horário em poucos segundos. Atendimento profissional, ambiente prem
 
 <div class="grid">
 
-<div class="card">
+<div class="card" id="bookingCard">
 
 <div class="card-title">
 Agende seu horário
@@ -402,13 +331,11 @@ Escolha a data, horário e preencha seus dados.
 
 <div class="form-group">
 <label>Escolha a data</label>
-
 <div class="date-list" id="dateList"></div>
 </div>
 
 <div class="form-group">
 <label>Escolha o horário</label>
-
 <div class="time-grid" id="timeGrid"></div>
 </div>
 
@@ -441,25 +368,6 @@ CONFIRMAR AGENDAMENTO
 </button>
 
 <div id="status" class="status"></div>
-
-</div>
-
-<div class="card" id="bookingInfoCard">
-
-<div class="card-title">
-Seu horário
-</div>
-
-<div class="summary">
-
-<div class="summary-item">
-<div class="summary-label">Horário selecionado</div>
-<div class="summary-value" id="selectedInfo">
-Nenhum horário selecionado
-</div>
-</div>
-
-</div>
 
 </div>
 
@@ -543,7 +451,6 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxx879HvFuAvbGshJ4E-
 const timeGrid = document.getElementById("timeGrid");
 const dateList = document.getElementById("dateList");
 
-const selectedInfo = document.getElementById("selectedInfo");
 const statusDiv = document.getElementById("status");
 
 let selectedDate = null;
@@ -573,7 +480,6 @@ const hours = [
 ];
 
 let bookedAppointments = [];
-
 let loadingAppointments = true;
 
 function generateDates(){
@@ -679,12 +585,6 @@ const div = document.createElement("div");
 div.className = "time-slot";
 div.innerText = hour;
 
-if(loadingAppointments){
-
-div.classList.add("booked");
-
-}
-
 const exists = bookedAppointments.find(item=>
 item.date === selectedDate &&
 item.time === hour
@@ -710,9 +610,6 @@ div.classList.add("selected");
 
 selectedTime = hour;
 
-selectedInfo.innerText =
-`${formatDate(selectedDate)} às ${selectedTime}`;
-
 };
 
 timeGrid.appendChild(div);
@@ -733,25 +630,10 @@ const data = await response.json();
 
 bookedAppointments = data.map(item => {
 
-let formattedDate = "";
-let formattedTime = "";
-
-if(item.date){
-
-formattedDate = item.date;
-
-}
-
-if(item.time){
-
-formattedTime = String(item.time).substring(0,5);
-
-}
-
 return {
 ...item,
-date: formattedDate,
-time: formattedTime
+date: item.date,
+time: String(item.time).substring(0,5)
 };
 
 });
@@ -785,7 +667,7 @@ document.getElementById("successService").innerText = service;
 document.getElementById("successDate").innerText =
 `${formatDate(selectedDate)} às ${selectedTime}`;
 
-document.getElementById("bookingInfoCard").style.display = "none";
+document.getElementById("bookingCard").style.display = "none";
 
 document.getElementById("successCard").style.display = "block";
 
@@ -795,11 +677,9 @@ function newBooking(){
 
 document.getElementById("successCard").style.display = "none";
 
-document.getElementById("bookingInfoCard").style.display = "block";
+document.getElementById("bookingCard").style.display = "block";
 
 selectedTime = null;
-
-selectedInfo.innerText = "Nenhum horário selecionado";
 
 document.querySelectorAll(".time-slot")
 .forEach(slot=>slot.classList.remove("selected"));
@@ -877,39 +757,6 @@ showStatus("Erro ao agendar.","error");
 
 button.disabled = false;
 button.innerText = "CONFIRMAR AGENDAMENTO";
-
-}
-
-async function cancelAppointment(index){
-
-const item = bookedAppointments[index];
-
-const button = event.target;
-
-button.disabled = true;
-button.innerText = "CANCELANDO...";
-
-const payload = {
-action:"cancel",
-date:item.date,
-time:item.time
-};
-
-try{
-
-await fetch(SCRIPT_URL,{
-method:"POST",
-body:JSON.stringify(payload)
-});
-
-await loadAppointments();
-
-}catch(error){
-
-button.disabled = false;
-button.innerText = "Cancelar horário";
-
-}
 
 }
 
