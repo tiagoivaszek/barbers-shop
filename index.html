@@ -471,20 +471,6 @@ Nenhum horário selecionado
 
 </div>
 
-<div class="admin-box">
-
-<div class="card-title" style="font-size:24px;">
-Painel do barbeiro
-</div>
-
-<div class="card-subtitle">
-Visualize, cancele e gerencie horários.
-</div>
-
-<div class="admin-list" id="adminList"></div>
-
-</div>
-
 </div>
 
 </div>
@@ -499,13 +485,12 @@ Visualize, cancele e gerencie horários.
 
 <script>
 
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyKFr5pzG_u5gakbPioHXwOHQoIWXxWgz7Ad25oIHDik37VOLkJ4nuzQsIbP5Y3TM2_/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxx879HvFuAvbGshJ4E-bW3iY3JN6a_TI0KKvGulz_aqc-3PG60_tb7RI3dUnZCoSd3/exec";
 
 const timeGrid = document.getElementById("timeGrid");
 const dateList = document.getElementById("dateList");
 
 const selectedInfo = document.getElementById("selectedInfo");
-const adminList = document.getElementById("adminList");
 const statusDiv = document.getElementById("status");
 
 let selectedDate = null;
@@ -721,69 +706,12 @@ time: formattedTime
 loadingAppointments = false;
 
 renderHours();
-renderAdmin();
 
 }catch(error){
 
 console.log(error);
 
 }
-
-}
-
-function renderAdmin(){
-
-adminList.innerHTML = "";
-
-bookedAppointments.forEach((item,index)=>{
-
-const div = document.createElement("div");
-
-div.className = "admin-item";
-
-const formattedDate = formatDate(item.date);
-
-const phone = String(item.phone).replace(/\D/g,'');
-
-div.innerHTML = `
-
-<div class="admin-name">
-${item.name}
-</div>
-
-<div class="admin-service">
-${item.service}
-</div>
-
-<div class="admin-date">
-📅 ${formattedDate}<br>
-⏰ ${item.time}
-</div>
-
-<div class="admin-phone">
-📞 ${item.phone}
-</div>
-
-<div class="admin-buttons">
-
-<a
-class="btn btn-whatsapp"
-target="_blank"
-href="https://wa.me/55${phone}">
-Chamar no WhatsApp
-</a>
-
-<button class="btn btn-danger"
-onclick="cancelAppointment(${index})">
-Cancelar horário
-</button>
-
-</div>
-`;
-
-adminList.appendChild(div);
-
-});
 
 }
 
@@ -831,10 +759,25 @@ time:selectedTime
 
 try{
 
-await fetch(SCRIPT_URL,{
+const response = await fetch(SCRIPT_URL,{
 method:"POST",
 body:JSON.stringify(payload)
 });
+
+const result = await response.json();
+
+if(!result.success){
+
+showStatus("Horário acabou de ser reservado.","error");
+
+button.disabled = false;
+button.innerText = "CONFIRMAR AGENDAMENTO";
+
+await loadAppointments();
+
+return;
+
+}
 
 showStatus("Horário agendado com sucesso.","success");
 
