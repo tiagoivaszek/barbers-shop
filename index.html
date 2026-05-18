@@ -148,6 +148,11 @@ gap:12px;
 margin-bottom:28px;
 }
 
+.btn:disabled{
+opacity:.7;
+cursor:not-allowed;
+}
+
 .date-btn{
 padding:16px 12px;
 border-radius:18px;
@@ -494,7 +499,7 @@ Visualize, cancele e gerencie horários.
 
 <script>
 
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzIBLjnyBRIquaKFJrUjbyhxnBAXxbupV87AjHrOnmMJO7EKAOOmuSjwCrYcHPhtfZo/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyKFr5pzG_u5gakbPioHXwOHQoIWXxWgz7Ad25oIHDik37VOLkJ4nuzQsIbP5Y3TM2_/exec";
 
 const timeGrid = document.getElementById("timeGrid");
 const dateList = document.getElementById("dateList");
@@ -855,6 +860,11 @@ async function cancelAppointment(index){
 
 const item = bookedAppointments[index];
 
+const button = event.target;
+
+button.disabled = true;
+button.innerText = "CANCELANDO...";
+
 const payload = {
 action:"cancel",
 date:item.date,
@@ -868,13 +878,12 @@ method:"POST",
 body:JSON.stringify(payload)
 });
 
-showStatus("Horário cancelado.","success");
-
 await loadAppointments();
 
 }catch(error){
 
-showStatus("Erro ao cancelar.","error");
+button.disabled = false;
+button.innerText = "Cancelar horário";
 
 }
 
