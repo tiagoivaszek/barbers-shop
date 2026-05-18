@@ -667,22 +667,22 @@ document.getElementById("successService").innerText = service;
 document.getElementById("successDate").innerText =
 `${formatDate(selectedDate)} às ${selectedTime}`;
 
+document.querySelector(".hero").style.display = "none";
+
 document.getElementById("bookingCard").style.display = "none";
 
 document.getElementById("successCard").style.display = "block";
 
-setTimeout(()=>{
-
 window.scrollTo({
-top:0,
-behavior:"smooth"
+top: 0,
+behavior: "smooth"
 });
-
-},100);
 
 }
 
 function newBooking(){
+
+document.querySelector(".hero").style.display = "block";
 
 document.getElementById("successCard").style.display = "none";
 
@@ -692,6 +692,11 @@ selectedTime = null;
 
 document.querySelectorAll(".time-slot")
 .forEach(slot=>slot.classList.remove("selected"));
+
+window.scrollTo({
+top: 0,
+behavior: "smooth"
+});
 
 }
 
