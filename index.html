@@ -680,7 +680,7 @@ behavior: "smooth"
 
 }
 
-function newBooking(){
+async function newBooking(){
 
 document.querySelector(".hero").style.display = "block";
 
@@ -692,6 +692,8 @@ selectedTime = null;
 
 document.querySelectorAll(".time-slot")
 .forEach(slot=>slot.classList.remove("selected"));
+
+await loadAppointments();
 
 window.scrollTo({
 top: 0,
