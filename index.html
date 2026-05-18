@@ -222,6 +222,11 @@ transform:translateY(-2px);
 box-shadow:0 18px 40px rgba(37,99,235,.45);
 }
 
+.btn-primary:disabled{
+opacity:.7;
+cursor:not-allowed;
+}
+
 .btn-danger{
 margin-top:14px;
 background:#dc2626;
@@ -333,11 +338,6 @@ background:#22c55e;
 color:white;
 }
 
-.admin-item strong{
-display:block;
-margin-bottom:6px;
-}
-
 footer{
 padding:50px 20px;
 text-align:center;
@@ -428,7 +428,10 @@ Escolha a data, horário e preencha seus dados.
 </select>
 </div>
 
-<button class="btn btn-primary" onclick="bookAppointment()">
+<button
+class="btn btn-primary"
+id="bookBtn"
+onclick="bookAppointment()">
 CONFIRMAR AGENDAMENTO
 </button>
 
@@ -491,7 +494,7 @@ Visualize, cancele e gerencie horários.
 
 <script>
 
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzuJPicVg0RxJGuJo7jUKwoHspkeWdOq7J-U5zEPzKHODMVWR8M4lri0x87Myi1sc0/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzIBLjnyBRIquaKFJrUjbyhxnBAXxbupV87AjHrOnmMJO7EKAOOmuSjwCrYcHPhtfZo/exec";
 
 const timeGrid = document.getElementById("timeGrid");
 const dateList = document.getElementById("dateList");
@@ -528,14 +531,27 @@ const hours = [
 
 let bookedAppointments = [];
 
+let loadingAppointments = true;
+
 function generateDates(){
 
 const today = new Date();
 
-for(let i=0;i<7;i++){
+let added = 0;
+let i = 0;
+
+while(added < 7){
 
 const date = new Date();
-date.setDate(today.getDate()+i);
+date.setDate(today.getDate() + i);
+
+i++;
+
+const day = date.getDay();
+
+if(day === 0){
+continue;
+}
 
 const formatted = date.toISOString().split("T")[0];
 
@@ -561,9 +577,11 @@ renderHours();
 
 dateList.appendChild(button);
 
-if(i===0){
+if(added === 0){
 button.click();
 }
+
+added++;
 
 }
 
@@ -573,12 +591,56 @@ function renderHours(){
 
 timeGrid.innerHTML = "";
 
-hours.forEach(hour=>{
+const parts = selectedDate.split("-");
+const selectedDay =
+new Date(parts[0], parts[1]-1, parts[2]).getDay();
+
+let availableHours = [...hours];
+
+if(selectedDay === 6){
+
+availableHours = [
+"08:00",
+"08:30",
+"09:00",
+"09:30",
+"10:00",
+"10:30",
+"11:00",
+"11:30"
+];
+
+}
+
+if(loadingAppointments){
+
+timeGrid.innerHTML = `
+<div style="
+grid-column:1/-1;
+padding:20px;
+text-align:center;
+color:#9ca3af;
+">
+Carregando horários...
+</div>
+`;
+
+return;
+
+}
+
+availableHours.forEach(hour=>{
 
 const div = document.createElement("div");
 
 div.className = "time-slot";
 div.innerText = hour;
+
+if(loadingAppointments){
+
+div.classList.add("booked");
+
+}
 
 const exists = bookedAppointments.find(item=>
 item.date === selectedDate &&
@@ -590,6 +652,13 @@ div.classList.add("booked");
 }
 
 div.onclick = ()=>{
+
+if(
+div.classList.contains("booked") ||
+loadingAppointments
+){
+return;
+}
 
 document.querySelectorAll(".time-slot")
 .forEach(slot=>slot.classList.remove("selected"));
@@ -613,6 +682,9 @@ async function loadAppointments(){
 
 try{
 
+loadingAppointments = true;
+renderHours();
+
 const response = await fetch(SCRIPT_URL);
 const data = await response.json();
 
@@ -623,12 +695,7 @@ let formattedTime = "";
 
 if(item.date){
 
-const d = new Date(item.date);
-
-formattedDate =
-d.getFullYear() + "-" +
-String(d.getMonth()+1).padStart(2,'0') + "-" +
-String(d.getDate()).padStart(2,'0');
+formattedDate = item.date;
 
 }
 
@@ -645,6 +712,8 @@ time: formattedTime
 };
 
 });
+
+loadingAppointments = false;
 
 renderHours();
 renderAdmin();
@@ -669,7 +738,7 @@ div.className = "admin-item";
 
 const formattedDate = formatDate(item.date);
 
-const phone = item.phone.replace(/\D/g,'');
+const phone = String(item.phone).replace(/\D/g,'');
 
 div.innerHTML = `
 
@@ -715,17 +784,15 @@ adminList.appendChild(div);
 
 function formatDate(dateString){
 
-const date = new Date(dateString);
+const [year, month, day] = dateString.split("-");
 
-return date.toLocaleDateString('pt-BR',{
-day:'2-digit',
-month:'2-digit',
-year:'numeric'
-});
+return `${day}/${month}/${year}`;
 
 }
 
 async function bookAppointment(){
+
+const button = document.getElementById("bookBtn");
 
 const name = document.getElementById("name").value;
 const phone = document.getElementById("phone").value;
@@ -744,6 +811,9 @@ showStatus("Preencha seus dados.","error");
 return;
 
 }
+
+button.disabled = true;
+button.innerText = "AGENDANDO...";
 
 const payload = {
 action:"book",
@@ -775,6 +845,9 @@ await loadAppointments();
 showStatus("Erro ao agendar.","error");
 
 }
+
+button.disabled = false;
+button.innerText = "CONFIRMAR AGENDAMENTO";
 
 }
 
