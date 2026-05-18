@@ -38,7 +38,7 @@ padding:0 20px;
 }
 
 .hero{
-padding:80px 0 50px;
+padding:70px 0 25px;
 background:
 linear-gradient(rgba(0,0,0,.78),rgba(0,0,0,.94)),
 url('https://images.unsplash.com/photo-1622286342621-4bd786c2447c?q=80&w=1974&auto=format&fit=crop');
@@ -82,7 +82,7 @@ color:#d6d6d6;
 }
 
 .main{
-padding:70px 0;
+padding:35px 0 70px;
 }
 
 .grid{
@@ -467,12 +467,16 @@ let selectedDate = null;
 let selectedTime = null;
 
 const hours = [
+"08:00",
+"08:30",
 "09:00",
 "09:30",
 "10:00",
 "10:30",
 "11:00",
 "11:30",
+"12:00",
+"12:30",
 "13:00",
 "13:30",
 "14:00",
@@ -482,9 +486,7 @@ const hours = [
 "16:00",
 "16:30",
 "17:00",
-"17:30",
-"18:00",
-"18:30"
+"17:30"
 ];
 
 let bookedAppointments = [];
@@ -560,7 +562,7 @@ div.classList.add("selected");
 selectedTime = hour;
 
 selectedInfo.innerText =
-`${selectedDate} às ${selectedTime}`;
+`${formatDate(selectedDate)} às ${selectedTime}`;
 
 };
 
@@ -600,20 +602,60 @@ const div = document.createElement("div");
 
 div.className = "admin-item";
 
+const formattedDate = formatDate(item.date);
+
+const phone = item.phone.replace(/\D/g,'');
+
 div.innerHTML = `
-<strong>${item.name}</strong>
-<div>${item.service}</div>
-<div>${item.date} às ${item.time}</div>
-<div>${item.phone}</div>
+
+<div class="admin-name">
+${item.name}
+</div>
+
+<div class="admin-service">
+${item.service}
+</div>
+
+<div class="admin-date">
+📅 ${formattedDate}<br>
+⏰ ${item.time}
+</div>
+
+<div class="admin-phone">
+📞 ${item.phone}
+</div>
+
+<div class="admin-buttons">
+
+<a
+class="btn btn-whatsapp"
+target="_blank"
+href="https://wa.me/55${phone}">
+Chamar no WhatsApp
+</a>
 
 <button class="btn btn-danger"
 onclick="cancelAppointment(${index})">
 Cancelar horário
 </button>
+
+</div>
 `;
 
 adminList.appendChild(div);
 
+});
+
+}
+
+function formatDate(dateString){
+
+const date = new Date(dateString);
+
+return date.toLocaleDateString('pt-BR',{
+day:'2-digit',
+month:'2-digit',
+year:'numeric'
 });
 
 }
